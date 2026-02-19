@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MedPredict — Neural Network Appointment No-Show Predictor</title>
+
+  <!-- Brain.js -->
+  <script src="https://cdn.jsdelivr.net/npm/brain.js@1.6.0/browser.js"></script>
+  <script>
+    if (typeof brain === 'undefined') {
+      document.write('<script src="https://unpkg.com/brain.js@1.6.0/browser.js"><\/script>');
+    }
+  </script>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;600&display=swap" rel="stylesheet" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="./styles/index.css" />
+
+  <!-- App Entry (module so we can use import/export) -->
+  <script type="module" src="./scripts/index.js"></script>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <header class="fade-in">
+    <div class="badge">Neural Network · Brain.js · Kaggle Dataset</div>
+    <h1>Med<span>Predict</span></h1>
+    <p class="subtitle">Predicting medical appointment no-shows using a feedforward neural network trained on 150 patient records from Vitória, Brazil.</p>
+  </header>
+
+  <!-- Stats Row -->
+  <div class="stats-row fade-in">
+    <div class="stat-card">
+      <div class="stat-label">Training Records</div>
+      <div class="stat-value">150</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Showed Up</div>
+      <div class="stat-value">117</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">No-Shows</div>
+      <div class="stat-value">33</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Features Used</div>
+      <div class="stat-value">8</div>
+    </div>
+  </div>
+
+  <!-- Network Architecture -->
+  <div class="card fade-in">
+    <div class="card-title">Network Architecture</div>
+    <div class="arch-layout">
+      <div id="archViz" class="arch-grid"></div>
+      <div class="features-list">
+        <div class="feat-row"><span class="feat-name">age</span><div class="feat-bar-bg"><div class="feat-bar-fill" style="width:88%"></div></div><span class="feat-pct">88%</span></div>
+        <div class="feat-row"><span class="feat-name">days_wait</span><div class="feat-bar-bg"><div class="feat-bar-fill" style="width:75%"></div></div><span class="feat-pct">75%</span></div>
+        <div class="feat-row"><span class="feat-name">sms_received</span><div class="feat-bar-bg"><div class="feat-bar-fill" style="width:62%"></div></div><span class="feat-pct">62%</span></div>
+        <div class="feat-row"><span class="feat-name">gender</span><div class="feat-bar-bg"><div class="feat-bar-fill" style="width:41%"></div></div><span class="feat-pct">41%</span></div>
+        <div class="feat-row"><span class="feat-name">scholarship</span><div class="feat-bar-bg"><div class="feat-bar-fill" style="width:35%"></div></div><span class="feat-pct">35%</span></div>
+        <div class="feat-row"><span class="feat-name">hipertension</span><div class="feat-bar-bg"><div class="feat-bar-fill" style="width:28%"></div></div><span class="feat-pct">28%</span></div>
+        <div class="feat-row"><span class="feat-name">diabetes</span><div class="feat-bar-bg"><div class="feat-bar-fill" style="width:22%"></div></div><span class="feat-pct">22%</span></div>
+        <div class="feat-row"><span class="feat-name">alcoholism</span><div class="feat-bar-bg"><div class="feat-bar-fill" style="width:15%"></div></div><span class="feat-pct">15%</span></div>
+        <p class="feat-note">Estimated feature importance based on normalized input variance contribution.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Train Model -->
+  <div class="card fade-in">
+    <div class="card-title">Train Neural Network</div>
+    <p class="train-desc">
+      Architecture: 8 inputs → Hidden[10, 6] → 1 output (sigmoid) · Optimizer: SGD · Iterations: 5,000 · Learning rate: 0.01
+    </p>
+    <button class="btn-primary" id="trainBtn">▶ Train Model</button>
+
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-label">
+        <span id="progressStatus">Training…</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressFill"></div>
+      </div>
+      <div class="log-output" id="logOutput"></div>
+    </div>
+
+    <div id="accuracySection" class="accuracy-section">
+      <div class="card-title" style="margin-bottom:16px;">Training Results</div>
+      <div class="accuracy-grid">
+        <div class="acc-card"><span class="acc-val" id="accOverall">—</span><span class="acc-lbl">Overall Accuracy</span></div>
+        <div class="acc-card"><span class="acc-val" id="accShowUp">—</span><span class="acc-lbl">Show-Up Recall</span></div>
+        <div class="acc-card"><span class="acc-val" id="accNoshow">—</span><span class="acc-lbl">No-Show Recall</span></div>
+      </div>
+      <p class="accuracy-note">
+        Note: With 150 training samples, accuracy reflects the model's learning from this subset. The class imbalance (78% show / 22% no-show) is a known challenge addressed via balanced training thresholds.
+      </p>
+    </div>
+  </div>
+
+  <!-- Predict Form -->
+  <div class="card fade-in" id="predictCard">
+    <div class="card-title">
+      <span class="pulse-dot" id="activeDot"></span>
+      Predict Patient Attendance
+    </div>
+
+    <form id="predictForm">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="inpAge">Age</label>
+          <input type="number" id="inpAge" value="35" min="0" max="100" />
+        </div>
+        <div class="form-group">
+          <label for="inpDays">Days Until Appointment</label>
+          <input type="number" id="inpDays" value="7" min="0" max="60" />
+        </div>
+        <div class="form-group">
+          <label>Gender</label>
+          <div class="toggle-group">
+            <div class="toggle-btn selected" id="gF" data-toggle="gender" data-val="F">Female</div>
+            <div class="toggle-btn" id="gM" data-toggle="gender" data-val="M">Male</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>SMS Received</label>
+          <div class="toggle-group">
+            <div class="toggle-btn selected" data-toggle="sms" data-val="No">No</div>
+            <div class="toggle-btn" data-toggle="sms" data-val="Yes">Yes</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Scholarship</label>
+          <div class="toggle-group">
+            <div class="toggle-btn selected" data-toggle="schl" data-val="No">No</div>
+            <div class="toggle-btn" data-toggle="schl" data-val="Yes">Yes</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Hypertension</label>
+          <div class="toggle-group">
+            <div class="toggle-btn selected" data-toggle="ht" data-val="No">No</div>
+            <div class="toggle-btn" data-toggle="ht" data-val="Yes">Yes</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Diabetes</label>
+          <div class="toggle-group">
+            <div class="toggle-btn selected" data-toggle="db" data-val="No">No</div>
+            <div class="toggle-btn" data-toggle="db" data-val="Yes">Yes</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Alcoholism</label>
+          <div class="toggle-group">
+            <div class="toggle-btn selected" data-toggle="al" data-val="No">No</div>
+            <div class="toggle-btn" data-toggle="al" data-val="Yes">Yes</div>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-predict">🔮 Run Prediction</button>
+    </form>
+
+    <div class="result-panel" id="resultPanel">
+      <div class="result-header">Prediction Output</div>
+      <div class="result-body">
+        <div class="gauge-wrap">
+          <svg class="gauge-svg" width="120" height="120" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="48" fill="none" stroke="#111f35" stroke-width="10"/>
+            <circle id="gaugeCircle" cx="60" cy="60" r="48" fill="none" stroke="#00d4aa"
+              stroke-width="10" stroke-linecap="round"
+              stroke-dasharray="301.6" stroke-dashoffset="301.6"
+              transform="rotate(-90 60 60)" />
+            <text id="gaugeText" class="gauge-text" x="60" y="57" font-size="22">0%</text>
+            <text class="gauge-sub" x="60" y="76" font-size="9">NO-SHOW RISK</text>
+          </svg>
+        </div>
+        <div class="result-verdict">
+          <div class="verdict-label" id="verdictLabel">—</div>
+          <p class="verdict-desc" id="verdictDesc">—</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Preview -->
+  <div class="card fade-in">
+    <div class="card-title">Training Data Preview (First 10 Rows)</div>
+    <div class="data-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>Age</th><th>Gender</th><th>Days Wait</th>
+            <th>SMS</th><th>Scholarship</th><th>Hypertension</th>
+            <th>Diabetes</th><th>Alcoholism</th><th>Neighbourhood</th><th>No-Show</th>
+          </tr>
+        </thead>
+        <tbody id="dataTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <!-- ── LSTM Section ────────────────────────────────────── -->
+  <div class="card fade-in">
+    <div class="card-title">LSTM — Text-Based Prediction</div>
+
+    <div class="lstm-info-grid">
+      <div class="lstm-info-block">
+        <div class="lstm-info-label">Model Type</div>
+        <div class="lstm-info-val">brain.recurrent.LSTM</div>
+      </div>
+      <div class="lstm-info-block">
+        <div class="lstm-info-label">Input</div>
+        <div class="lstm-info-val">Patient text description</div>
+      </div>
+      <div class="lstm-info-block">
+        <div class="lstm-info-label">Output</div>
+        <div class="lstm-info-val">"noshow" or "showup"</div>
+      </div>
+      <div class="lstm-info-block">
+        <div class="lstm-info-label">Data Split</div>
+        <div class="lstm-info-val">70% train / 15% val / 15% test</div>
+      </div>
+    </div>
+
+    <div class="lstm-pipeline">
+      <div class="pipeline-step">
+        <div class="pipeline-num">1</div>
+        <div class="pipeline-text"><strong>Text Generation</strong><br/>Convert each record to a natural-language description</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-step">
+        <div class="pipeline-num">2</div>
+        <div class="pipeline-text"><strong>Text Cleaning</strong><br/>Lowercase, strip special chars, normalize whitespace</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-step">
+        <div class="pipeline-num">3</div>
+        <div class="pipeline-text"><strong>Train / Val / Test</strong><br/>70 / 15 / 15 split + no-show oversampling</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-step">
+        <div class="pipeline-num">4</div>
+        <div class="pipeline-text"><strong>LSTM Training</strong><br/>Character-level sequence model</div>
+      </div>
+    </div>
+
+    <div class="lstm-sample-box" id="lstmSampleBox">
+      <div class="lstm-sample-label">Example training text</div>
+      <div id="lstmSampleText" class="lstm-sample-text">Click "Train LSTM" to generate…</div>
+    </div>
+
+    <button class="btn-primary" id="lstmTrainBtn">▶ Train LSTM</button>
+
+    <div class="progress-wrap" id="lstmProgressWrap">
+      <div class="progress-label">
+        <span id="lstmProgressStatus">Training LSTM…</span>
+        <span id="lstmProgressPct">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="lstmProgressFill" style="background: linear-gradient(90deg, var(--accent2), var(--warn));"></div>
+      </div>
+      <div class="log-output" id="lstmLogOutput"></div>
+    </div>
+
+    <div id="lstmAccuracySection" class="accuracy-section">
+      <div class="card-title" style="margin-bottom:16px;">LSTM Evaluation Results</div>
+      <div class="accuracy-grid" style="grid-template-columns: repeat(4,1fr);">
+        <div class="acc-card"><span class="acc-val" id="lstmValAcc">—</span><span class="acc-lbl">Val Accuracy</span></div>
+        <div class="acc-card"><span class="acc-val" id="lstmTestAcc">—</span><span class="acc-lbl">Test Accuracy</span></div>
+        <div class="acc-card"><span class="acc-val" id="lstmShowRecall">—</span><span class="acc-lbl">Show-Up Recall</span></div>
+        <div class="acc-card"><span class="acc-val" id="lstmNoshowRecall">—</span><span class="acc-lbl">No-Show Recall</span></div>
+      </div>
+      <p class="accuracy-note">
+        LSTM is evaluated separately on the held-out test set (15% of data, unseen during training).
+        Character-level LSTMs on small datasets are noisy — validation gives a fairer picture.
+      </p>
+    </div>
+  </div>
+
+  <!-- ── LSTM Predict Card ─────────────────────────────────── -->
+  <div class="card fade-in" id="lstmPredictCard">
+    <div class="card-title">
+      <span class="pulse-dot" id="lstmActiveDot"></span>
+      LSTM — Free Text Prediction
+    </div>
+
+    <p class="train-desc">
+      Type a patient description in natural language. The LSTM will read the character sequence
+      and predict attendance. Try keywords like: <em>female, male, age, hypertension, diabetes,
+      sms received, days wait, scholarship, alcoholism, same day appointment</em>
+    </p>
+
+    <div class="lstm-text-input-wrap">
+      <label for="lstmTextInput">Patient Description</label>
+      <textarea id="lstmTextInput" class="lstm-textarea"
+        placeholder="e.g. female age 28 sms received 5 days wait scholarship"
+        rows="3"></textarea>
+      <div id="lstmCleanedText" class="lstm-cleaned"></div>
+    </div>
+
+    <button class="btn-primary btn-lstm-predict" id="lstmPredictBtn"
+            style="background:var(--warn);margin-top:16px;">
+      🔮 Predict with LSTM
+    </button>
+
+    <div class="result-panel" id="lstmResultPanel">
+      <div class="result-header">LSTM Prediction Output</div>
+      <div class="result-body">
+        <div class="gauge-wrap">
+          <svg class="gauge-svg" width="120" height="120" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="48" fill="none" stroke="#111f35" stroke-width="10"/>
+            <circle id="lstmGaugeCircle" cx="60" cy="60" r="48" fill="none" stroke="#ffa502"
+              stroke-width="10" stroke-linecap="round"
+              stroke-dasharray="301.6" stroke-dashoffset="301.6"
+              transform="rotate(-90 60 60)"/>
+            <text class="gauge-text" id="lstmGaugeText" x="60" y="57" font-size="16">—</text>
+            <text class="gauge-sub" x="60" y="76" font-size="9">LSTM OUTPUT</text>
+          </svg>
+        </div>
+        <div class="result-verdict">
+          <div class="verdict-label" id="lstmVerdictLabel">—</div>
+          <p class="verdict-desc" id="lstmVerdictDesc">—</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

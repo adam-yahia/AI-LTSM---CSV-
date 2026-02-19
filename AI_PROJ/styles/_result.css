@@ -1,0 +1,84 @@
+/* _result.css — Prediction result panel and gauge */
+
+.result-panel {
+  display: none;
+  margin-top: 28px;
+  background: var(--bg);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.result-panel.visible {
+  display: block;
+  animation: fadeIn 0.4s ease both;
+}
+
+.result-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--muted);
+}
+
+.result-body {
+  padding: 32px 24px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+/* ── Gauge ── */
+.gauge-wrap {
+  flex-shrink: 0;
+}
+
+.gauge-svg {
+  overflow: visible;
+}
+
+.gauge-text {
+  text-anchor: middle;
+  dominant-baseline: middle;
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  fill: #fff;
+}
+
+.gauge-sub {
+  text-anchor: middle;
+  font-family: 'JetBrains Mono', monospace;
+  fill: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+/* ── Verdict ── */
+.result-verdict {
+  flex: 1;
+}
+
+.verdict-label {
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.verdict-label.will-show { color: var(--accent); }
+.verdict-label.no-show   { color: var(--danger); }
+
+.verdict-desc {
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+/* ── Responsive ── */
+@media (max-width: 700px) {
+  .result-body { flex-direction: column; }
+}

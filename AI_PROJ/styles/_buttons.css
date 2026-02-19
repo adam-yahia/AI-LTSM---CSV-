@@ -1,0 +1,92 @@
+/* _buttons.css — All button styles */
+
+.btn-primary {
+  background: var(--accent);
+  color: #060d1a;
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 14px 32px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0, 212, 170, 0.35);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-predict {
+  margin-top: 28px;
+  background: var(--accent2);
+  color: #fff;
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 14px 32px;
+  border: none;
+  border-radius: 6px;
+  cursor: not-allowed;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  opacity: 0.4;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#predictCard.enabled .btn-predict {
+  cursor: pointer;
+  opacity: 1;
+}
+
+#predictCard.enabled .btn-predict:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0, 153, 255, 0.35);
+}
+
+/* Toggle buttons */
+.toggle-group {
+  display: flex;
+  gap: 8px;
+}
+
+.toggle-btn {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  padding: 11px 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  font-weight: 600;
+  user-select: none;
+}
+
+.toggle-btn.selected {
+  background: rgba(0, 212, 170, 0.1);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.toggle-btn:hover:not(.selected) {
+  border-color: var(--muted);
+  color: var(--text);
+}
